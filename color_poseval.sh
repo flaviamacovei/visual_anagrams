@@ -20,49 +20,48 @@ for i in ${!prompts[@]}; do
         style=${styles[$k]}
         view=${views[$l]}
         name=${prompt// /_}"-"${style// /_}"-"${view// /_}
-        name=${name//\'/}
-	cmd="python generate.py --name "$name" --prompts "$prompt" --views 'identity' "$view" --style "$style" --num_samples 1 --num_inference_steps 30 --guidance_scale 10.0 --generate_1024"
+        cmd="python generate.py --name "$name" --prompts "$prompt" --views 'identity' "$view" --style "$style" --num_samples 1 --num_inference_steps 30 --guidance_scale 10.0 --generate_1024"
 
         echo "executing "$cmd
 
         # write the command into a file
-        echo "#!/bin/bash" > color_run.sh
-        echo $cmd >> color_run.sh
+        echo "#!/bin/bash" > one_run.sh
+        echo $cmd >> one_run.sh
 
         # change the rights of the file : make it executable
-        chmod 755 color_run.sh
+        chmod 755 one_run.sh
 
         # run the file
-        ./color_run.sh
+        ./one_run.sh
 
         image_dir=`pwd`/results/${name//\'}
-        line_count=`ls -la $image_dir/ | wc -l`
-        echo $line_count
-        if (($line_count >= 4)); then
-          picture=$image_dir/0000/sample_1024.png
+	line_count=`ls -la $image_dir/ | wc -l`
+	echo $line_count
+	if (($line_count >= 4)); then
+          picture=$image_dir/0000/sample_1024.views.png
 
-          echo "analysing image"
-          cmd2="python poseval.py --path "$picture" --targets "$prompt" --views "$view
-
-          echo "#!/bin/bash" > color_run.sh
-          echo $cmd2 >> color_run.sh
-          ./color_run.sh
-          result=$?
-	  echo "result: "$result
+	  echo "analysing image"
+	  cmd2="python positive_analysis_scores.py --path "$picture" --targets "$prompt" --views "$view
   
-          if (($result == 1)) ; then
-            echo "success"
-            echo "prompts: "$prompt >> $result_file
-            echo "style: "$style >> $result_file
-            echo "views: 'identity' "$view >> $result_file
-            echo "" >> $result_file
-          fi
+    echo "#!/bin/bash" > one_run.sh
+    echo $cmd2 >> one_run.sh
+    ./one_run.sh
+    result=$?
+  
+    if (($result == 1)) ; then
+      echo "success"
+      echo "prompts: "$prompt >> $result_file
+      echo "style: "$style >> $result_file
+      echo "views: 'identity' "$view >> $result_file
+      echo "" >> $result_file
+    fi
 
-        fi
+	fi
   
         rm -rf $image_dir
       done
     done
   done
 done
-echo "done"
+
+#tmux: cs
