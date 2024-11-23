@@ -1,8 +1,11 @@
+import os.path
+
 from tqdm import tqdm
 
 import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional as TF
+from torchvision.utils import save_image
 
 from diffusers.utils.torch_utils import randn_tensor
 
@@ -71,7 +74,9 @@ def sample_stage_1(model,
         # Apply views to noisy_image
         viewed_noisy_images = []
         for view_fn in views:
-            viewed_noisy_images.append(view_fn.view(noisy_images[0]))
+            viewed_noisy_image = view_fn.view(noisy_images[0])
+            # viewed_noisy_image = viewed_noisy_image.to(device)
+            viewed_noisy_images.append(viewed_noisy_image)
         viewed_noisy_images = torch.stack(viewed_noisy_images)
 
         # Duplicate inputs for CFG
@@ -95,6 +100,7 @@ def sample_stage_1(model,
         inverted_preds = []
         for pred, view in zip(noise_pred_uncond, views):
             inverted_pred = view.inverse_view(pred)
+            # inverted_pred = inverted_pred.to(device)
             inverted_preds.append(inverted_pred)
         noise_pred_uncond = torch.stack(inverted_preds)
 
@@ -102,6 +108,7 @@ def sample_stage_1(model,
         inverted_preds = []
         for pred, view in zip(noise_pred_text, views):
             inverted_pred = view.inverse_view(pred)
+            # inverted_pred = inverted_pred.to(device)
             inverted_preds.append(inverted_pred)
         noise_pred_text = torch.stack(inverted_preds)
 
@@ -115,6 +122,10 @@ def sample_stage_1(model,
         predicted_variance = predicted_variance.view(-1,num_prompts,3,64,64)
         if reduction == 'mean':
             noise_pred = noise_pred.mean(1)
+            # f = open(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "noise.txt"), "a")
+            # f.write(f"NOISE PRED SHAPE: {noise_pred.shape}\n")
+            # f.close()
+            # save_image(noise_pred / 2. + 0.5, os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), f"results/noise/noise_{i}_{t}.png"), padding=0)
             predicted_variance = predicted_variance.mean(1)
         elif reduction == 'sum':
             # For factorized diffusion
@@ -131,6 +142,8 @@ def sample_stage_1(model,
         noisy_images = model.scheduler.step(
             noise_pred, t, noisy_images, generator=generator, return_dict=False
         )[0]
+        f = open(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "noise.txt"), "a")
+        f.write(f"noisy images type: {type(noisy_images)}")
 
     # Return denoised images
     return noisy_images
@@ -220,7 +233,9 @@ def sample_stage_2(model,
         # Apply views to noisy_image
         viewed_inputs = []
         for view_fn in views:
-            viewed_inputs.append(view_fn.view(model_input[0]))
+            viewed_input = view_fn.view(model_input[0])
+            # viewed_input = viewed_input.to(device)
+            viewed_inputs.append(viewed_input)
         viewed_inputs = torch.stack(viewed_inputs)
 
         # Duplicate inputs for CFG
@@ -246,6 +261,7 @@ def sample_stage_2(model,
         inverted_preds = []
         for pred, view in zip(noise_pred_uncond, views):
             inverted_pred = view.inverse_view(pred)
+            # inverted_pred = inverted_pred.to(device)
             inverted_preds.append(inverted_pred)
         noise_pred_uncond = torch.stack(inverted_preds)
 
@@ -253,6 +269,7 @@ def sample_stage_2(model,
         inverted_preds = []
         for pred, view in zip(noise_pred_text, views):
             inverted_pred = view.inverse_view(pred)
+            # inverted_pred = inverted_pred.to(device)
             inverted_preds.append(inverted_pred)
         noise_pred_text = torch.stack(inverted_preds)
 

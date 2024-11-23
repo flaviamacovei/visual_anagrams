@@ -1,0 +1,1 @@
+python analyse_image_ollama.py --path /h/u5/c4/06/macoveif/visual_anagrams/results/elvis_a_carrot-a_watercolor_of-rotate_180/0000/sample_1024.views.png --targets 'elvis' 'a carrot' --views 'rotate_180' --fault ss

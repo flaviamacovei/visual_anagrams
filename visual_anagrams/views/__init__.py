@@ -4,7 +4,7 @@ import numpy as np
 
 from .view_identity import IdentityView
 from .view_flip import FlipView
-from .view_rotate import Rotate180View, Rotate90CCWView, Rotate90CWView
+from .view_rotate import Rotate180View, Rotate90CCWView, Rotate90CWView, RotateView120, RotateView240
 from .view_negate import NegateView
 from .view_skew import SkewView
 from .view_patch_permute import PatchPermuteView
@@ -19,6 +19,8 @@ from .view_hybrid import HybridLowPassView, HybridHighPassView, \
 from .view_color import ColorView, GrayscaleView
 from .view_motion import MotionBlurResView, MotionBlurView
 from .view_scale import ScaleView
+from .view_colorrotate_gbr import ColorRotate_GBR
+from .view_colorrotate_brg import ColorRotate_BRG
 
 VIEW_MAP = {
     'identity': IdentityView,
@@ -46,6 +48,10 @@ VIEW_MAP = {
     'motion': MotionBlurView,
     'motion_res': MotionBlurResView,
     'scale': ScaleView,
+    'color_rotate_gbr': ColorRotate_GBR,
+    'color_rotate_brg': ColorRotate_BRG,
+    'rotate_120': RotateView120,
+    'rotate_240': RotateView240,
 }
 
 def get_views(view_names, view_args=None):

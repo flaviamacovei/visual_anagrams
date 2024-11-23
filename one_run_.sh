@@ -1,0 +1,1 @@
+python analyse_image_ollama.py --path /h/u5/c4/06/macoveif/visual_anagrams/results/'a_cherry'_'houseplants'-'a_sketch_of'-'flip'/0000/sample_1024.views.png --targets 'a cherry' 'houseplants' --views 'flip'
