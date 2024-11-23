@@ -2,3 +2,4 @@ results/
 results*
 .vscode/
 __pycache__/
+**/*.png

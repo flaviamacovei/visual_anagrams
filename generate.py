@@ -84,6 +84,7 @@ for i in range(args.num_samples):
                            num_inference_steps=args.num_inference_steps,
                            guidance_scale=args.guidance_scale,
                            reduction=args.reduction,
+                           alternate_until=args.alternate_until,
                            generator=generator)
     save_illusion(image, views, sample_dir)
 
@@ -97,6 +98,7 @@ for i in range(args.num_samples):
                            num_inference_steps=args.num_inference_steps,
                            guidance_scale=args.guidance_scale,
                            reduction=args.reduction,
+                           alternate_until=args.alternate_until,
                            noise_level=args.noise_level,
                            generator=generator)
     save_illusion(image, views, sample_dir)

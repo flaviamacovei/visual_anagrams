@@ -1,1 +1,0 @@
-python generate.py --name 'a_beach'_'a_farm'-'a_painting_of'-'rotate_180' --prompts 'a beach' 'a farm' --views 'identity' 'rotate_180' --style 'a painting of' --num_samples 1 --num_inference_steps 30 --guidance_scale 10.0 --generate_1024

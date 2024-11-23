@@ -17,10 +17,13 @@ def sample_stage_1(model,
                    ref_im=None,
                    num_inference_steps=100,
                    guidance_scale=7.0,
-                   reduction='mean',
+                   reduction=None,
+                   alternate_until=0,
                    generator=None):
 
     # Params
+    if reduction is None:
+        reduction = 'alternate'
     num_images_per_prompt = 1
     #device = model.device
     device = torch.device('cuda')   # Sometimes model device is cpu???
@@ -57,6 +60,8 @@ def sample_stage_1(model,
     for i, t in enumerate(tqdm(timesteps)):
         # If solving an inverse problem, then project x_t so
         # that first component matches reference image's first component
+        if i == alternate_until:
+            reduction = 'mean'
         if ref_im is not None:
             # Inject noise to reference image
             alpha_cumprod = model.scheduler.alphas_cumprod[t]
@@ -122,10 +127,6 @@ def sample_stage_1(model,
         predicted_variance = predicted_variance.view(-1,num_prompts,3,64,64)
         if reduction == 'mean':
             noise_pred = noise_pred.mean(1)
-            # f = open(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "noise.txt"), "a")
-            # f.write(f"NOISE PRED SHAPE: {noise_pred.shape}\n")
-            # f.close()
-            # save_image(noise_pred / 2. + 0.5, os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), f"results/noise/noise_{i}_{t}.png"), padding=0)
             predicted_variance = predicted_variance.mean(1)
         elif reduction == 'sum':
             # For factorized diffusion
@@ -142,8 +143,6 @@ def sample_stage_1(model,
         noisy_images = model.scheduler.step(
             noise_pred, t, noisy_images, generator=generator, return_dict=False
         )[0]
-        f = open(os.path.join(os.path.dirname(os.path.dirname(os.path.realpath(__file__))), "noise.txt"), "a")
-        f.write(f"noisy images type: {type(noisy_images)}")
 
     # Return denoised images
     return noisy_images
@@ -163,11 +162,14 @@ def sample_stage_2(model,
                    ref_im=None,
                    num_inference_steps=100,
                    guidance_scale=7.0,
-                   reduction='mean',
+                   reduction=None,
+                   alternate_until=0,
                    noise_level=50,
                    generator=None):
 
     # Params
+    if reduction is None:
+        reduction = 'alternate'
     batch_size = 1      # TODO: Support larger batch sizes, maybe
     num_prompts = prompt_embeds.shape[0]
     height = model.unet.config.sample_size
@@ -211,6 +213,8 @@ def sample_stage_2(model,
 
     # Denoising Loop
     for i, t in enumerate(tqdm(timesteps)):
+        if i == alternate_until:
+            reduction = 'mean'
         # If solving an inverse problem, then project x_t so
         # that first component matches reference image's first component
         if ref_im is not None:
