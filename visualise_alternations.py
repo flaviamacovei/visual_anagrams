@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import os
 
 times_path = "times.txt"
-alignments_path = "for_later/alignments.txt"
+alignments_path = "alignments.txt"
 concealments_path = "concealments.txt"
 untils_path = "untils.txt"
 
@@ -77,7 +77,7 @@ plt.xlabel('alternate until')
 plt.ylabel('processing time')
 plt.title('Alignment Score and processing time plotted against alternate until')
 
-plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "results/alignment.png"))
+plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "visualisations/alignment.png"))
 
 plt.clf()
 plt.figure()
@@ -88,4 +88,4 @@ plt.xlabel('alternate until')
 plt.ylabel('processing time')
 plt.title('Concealment Score and processing time plotted against alternate until')
 
-plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "results/concealment.png"))
+plt.savefig(os.path.join(os.path.dirname(os.path.realpath(__file__)), "visualisations/concealment.png"))

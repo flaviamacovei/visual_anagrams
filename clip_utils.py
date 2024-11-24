@@ -14,6 +14,7 @@ def yap(text):
         file.write(f"{text}\n")
 
 def compute_scores(image_path, views, prompts):
+    assert len(views) == len(prompts)
     scores = []
     view_objects = get_views(views, None)
     image = Image.open(image_path)

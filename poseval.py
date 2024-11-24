@@ -14,7 +14,7 @@ import argparse
 from visual_anagrams.views import get_views
 import torch
 
-from ollama_utils import compute_scores, model
+from clip_utils import compute_scores, model
 
 
 
@@ -34,17 +34,18 @@ def analyse_image(image_path, views, targets):
     return alignment_score > 0.7 and concealment_score > 0.7
 
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--path", required = True, type = str, help="path to image")
-parser.add_argument("--targets", required = True, type = str, nargs='+', help = "image targets (must be same length as views)")
-parser.add_argument("--views", required = True, type = str, nargs='+', help = "image views (must be same length as targets)")
-
-args = parser.parse_args()
-
-yap(args.path)
-
-
-response = analyse_image(args.path, args.views, args.targets)
-
-sys.exit(int(response))
+if __name__ == "__main__":
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path", required = True, type = str, help="path to image")
+    parser.add_argument("--targets", required = True, type = str, nargs='+', help = "image targets (must be same length as views)")
+    parser.add_argument("--views", required = True, type = str, nargs='+', help = "image views (must be same length as targets)")
+    
+    args = parser.parse_args()
+    
+    yap(args.path)
+    
+    
+    response = analyse_image(args.path, args.views, args.targets)
+    
+    sys.exit(int(response))

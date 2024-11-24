@@ -26,7 +26,7 @@ alignment_scores = []
 concealment_scores = []
 
 for until in args.untils:
-    with open("../untils.txt", "a") as file:
+    with open("./untils.txt", "a") as file:
         file.write(f"{until}\n")
 
 

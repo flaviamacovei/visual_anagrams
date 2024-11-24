@@ -7,14 +7,21 @@ from diffusers import DiffusionPipeline
 import torchvision.transforms.functional as TF
 
 from visual_anagrams.views import get_views
-from visual_anagrams.samplers import sample_stage_1, sample_stage_2
+from visual_anagrams.samplers_alt import sample_stage_1, sample_stage_2
 from visual_anagrams.utils import add_args, save_illusion, save_metadata
 
+
+def yap(text):
+    with open("yap_sampler.txt", "a") as file:
+        file.write(f"{text}\n")
 
 # Parse args
 parser = argparse.ArgumentParser()
 parser = add_args(parser)
 args = parser.parse_args()
+
+#yap(f"reduction: {args.reduction}")
+#yap(f"alternate until: {args.alternate_until}")
 
 # Do admin stuff
 save_dir = Path(args.save_dir) / args.name
@@ -56,10 +63,21 @@ if args.generate_1024:
 
 # Get prompt embeddings
 prompts = [f'{args.style} {p}'.strip() for p in args.prompts]
+yap(f"prompts: {prompts}")
 prompt_embeds = [stage_1.encode_prompt(p) for p in prompts]
+yap(f"shapes: {len(prompt_embeds)}\n{len(prompt_embeds[0])}\n{prompt_embeds[0][0].shape}")
+yap(f"prompt embeds now: {prompt_embeds}")
 prompt_embeds, negative_prompt_embeds = zip(*prompt_embeds)
+yap(f"later shape prompts: {len(prompt_embeds)}\n{prompt_embeds[0].shape}")
+yap(f"prompt embeds later: {prompt_embeds}")
+yap(f"later shape negs: {len(negative_prompt_embeds)}\n{negative_prompt_embeds[0].shape}")
+yap(f"negative embeds later: {negative_prompt_embeds}")
 prompt_embeds = torch.cat(prompt_embeds)
 negative_prompt_embeds = torch.cat(negative_prompt_embeds)  # These are just null embeds
+yap(f"final shape prompts: {prompt_embeds.shape}")
+yap(f"final form prompts: {prompt_embeds}")
+yap(f"final shape negs: {negative_prompt_embeds.shape}")
+yap(f"final form negs: {negative_prompt_embeds}")
 
 # Get views
 views = get_views(args.views, view_args=args.view_args)
