@@ -9,10 +9,6 @@ from torchvision.utils import save_image
 
 from diffusers.utils.torch_utils import randn_tensor
 
-def yap(text):
-    with open("yap_gen.txt", "a") as file:
-        file.write(f"{text}\n")
-
 @torch.no_grad()
 def sample_stage_1(model,
                    prompt_embeds,
@@ -61,9 +57,12 @@ def sample_stage_1(model,
         ref_im = TF.resize(ref_im, height)
         ref_im = ref_im.to(noisy_images.device).to(noisy_images.dtype)
 
+    alternation_counter = 0
+
+    all_views = views[:]
+    all_prompt_embeds = prompt_embeds[:]
+
     for i, t in enumerate(tqdm(timesteps)):
-        #yap(f"iteration {i} reduction: {reduction}")
-        #yap(f"alternate until: {alternate_until}")
         # If solving an inverse problem, then project x_t so
         # that first component matches reference image's first component
         if i == alternate_until:
@@ -75,8 +74,8 @@ def sample_stage_1(model,
                         torch.sqrt(1 - alpha_cumprod) * torch.randn_like(ref_im)
 
             # Replace 1st component of x_t with 1st component of noisy ref image
-            ref_noisy_component = views[0].inverse_view(ref_noisy)
-            noisy_images_component = views[1].inverse_view(noisy_images[0])
+            ref_noisy_component = all_views[0].inverse_view(ref_noisy)
+            noisy_images_component = all_views[1].inverse_view(noisy_images[0])
             noisy_images = ref_noisy_component + noisy_images_component
 
             # Add back batch dim
@@ -84,18 +83,27 @@ def sample_stage_1(model,
 
         # Apply views to noisy_image
         viewed_noisy_images = []
+        if reduction == 'alternate':
+            views = [all_views[alternation_counter]]
+        else:
+            views = all_views[:]
+            # viewed_noisy_image = views[alternation_counter].view(noisy_images[0])
+            # viewed_noisy_images.append(viewed_noisy_image)
         for view_fn in views:
             viewed_noisy_image = view_fn.view(noisy_images[0])
             # viewed_noisy_image = viewed_noisy_image.to(device)
             viewed_noisy_images.append(viewed_noisy_image)
         viewed_noisy_images = torch.stack(viewed_noisy_images)
-
         # Duplicate inputs for CFG
         # Model input is: [ neg_0, neg_1, ..., pos_0, pos_1, ... ]
         model_input = torch.cat([viewed_noisy_images] * 2)
         model_input = model.scheduler.scale_model_input(model_input, t)
-
         # Predict noise estimate
+        if reduction == 'alternate':
+            indeces = range(0 + alternation_counter, all_prompt_embeds.shape[0] + alternation_counter, num_prompts)
+            prompt_embeds = torch.stack([all_prompt_embeds[i] for i in indeces])
+        else:
+            prompt_embeds = all_prompt_embeds[:]
         noise_pred = model.unet(
             model_input,
             t,
@@ -129,8 +137,9 @@ def sample_stage_1(model,
         noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
 
         # Reduce predicted noise and variances
-        noise_pred = noise_pred.view(-1,num_prompts,3,64,64)
-        predicted_variance = predicted_variance.view(-1,num_prompts,3,64,64)
+        if reduction != 'alternate':
+            noise_pred = noise_pred.view(-1,num_prompts,3,64,64)
+            predicted_variance = predicted_variance.view(-1,num_prompts,3,64,64)
         if reduction == 'mean':
             noise_pred = noise_pred.mean(1)
             predicted_variance = predicted_variance.mean(1)
@@ -139,8 +148,9 @@ def sample_stage_1(model,
             noise_pred = noise_pred.sum(1)
             predicted_variance = predicted_variance.mean(1)
         elif reduction == 'alternate':
-            noise_pred = noise_pred[:,i%num_prompts]
-            predicted_variance = predicted_variance[:,i%num_prompts]
+            pass
+            # noise_pred = noise_pred[:,i%num_prompts]
+            # predicted_variance = predicted_variance[:,i%num_prompts]
         else:
             raise ValueError('Reduction must be either `mean` or `alternate`')
         noise_pred = torch.cat([noise_pred, predicted_variance], dim=1)
@@ -149,6 +159,8 @@ def sample_stage_1(model,
         noisy_images = model.scheduler.step(
             noise_pred, t, noisy_images, generator=generator, return_dict=False
         )[0]
+        alternation_counter += 1
+        alternation_counter = alternation_counter % num_prompts
 
     # Return denoised images
     return noisy_images

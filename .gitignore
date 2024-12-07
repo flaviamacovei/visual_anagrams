@@ -5,3 +5,6 @@ __pycache__/
 **/*.png
 *run*
 *.txt
+config_analysis.py
+!
+**/*run.sh
